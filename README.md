@@ -30,7 +30,7 @@ npm install -g firebase-tools
 # Login (Use --no-localhost flag if you are on Codespaces)
 firebase login --no-localhost
 
-#4. Deploy to Web
+##4. Deploy to Web
 Link your local environment to your Firebase project and publish:
 
 Bash
