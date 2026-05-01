@@ -40,6 +40,7 @@ Link your local environment to your Firebase project and publish:
 
 ### Upload to Firebase Hosting
 `firebase deploy`
+```
 
 # 📋 Customization
 Member List
