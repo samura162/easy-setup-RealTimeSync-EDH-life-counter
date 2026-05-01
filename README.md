@@ -29,6 +29,7 @@ In your terminal (e.g., GitHub Codespaces), run the following commands:
 
 ### Login (Use --no-localhost flag if you are on Codespaces)
 `firebase login --no-localhost`
+```
 
 ## 4. Deploy to Web
 Link your local environment to your Firebase project and publish:
