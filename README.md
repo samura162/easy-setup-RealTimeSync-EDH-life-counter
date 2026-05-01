@@ -48,6 +48,7 @@ Edit members.txt and add your playgroup's nicknames (one name per line). After e
 
 ```bash
 `firebase deploy`
+```
 
 # 📄 License
 This project is open-source. Feel free to fork and customize it for your own playgroup!
