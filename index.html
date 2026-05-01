@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Samura's MTG Commander Life Counter</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; height: 100vh; width: 100vw; color: #fff; font-family: sans-serif; overflow: hidden; }
+        .app-header { height: 5vh; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; background: #000; }
+        .header-btns button, .day-night-select { padding: 1px 4px; height: 4vh; align-items: center; }
+        .order-btn { background: #0277bd ; color: #fff; font-size: 2.5vmin; border: none; }
+        .reset-btn { background: #c62828 ; color: #fff; font-size: 2.5vmin; border: none; }
+        .day-night-select { background: #444; color: #fff; font-size: 2.5vmin; }
+        .grid { display: grid; grid-template-columns: 50% 50%; grid-template-rows: calc(50% - 1vh) calc(50% - 1vh); height: 96vh; width: 100%; gap: 1px; padding: 1px; }
+        body.state-none { background: #121212; color: #fff; }
+        body.state-none .app-header { background: #121212; }
+        body.state-none .player-box { background: #1f1f1f; border-color: #2a2a2a; }
+        body.state-day { background: #4a3a05; color: #fff; }
+        body.state-day .app-header { background: #4a3a05; }
+        body.state-day .player-box { background: rgba(0, 0, 0, 0.3); border-color: #5a4a15; }
+        body.state-night { background: #1a1b3a; color: #fff; }
+        body.state-night .app-header { background: #1a1b3a; }
+        body.state-night .player-box { background: rgba(0, 0, 0, 0.4); border-color: #2a2b4a; }
+        .player-box { background: #111; border: 1px solid #333;display: flex; flex-direction: column; padding: 2px; }
+        #slot-P1 { grid-area: 1 / 1 / 2 / 2; } 
+        #slot-P2 { grid-area: 1 / 2 / 2 / 3; } 
+        #slot-P3 { grid-area: 2 / 2 / 3 / 3; } 
+        #slot-P4 { grid-area: 2 / 1 / 3 / 2; } 
+        .header-area { height: 4vh; display: flex; align-items: center; gap: 1px; flex-shrink: 0; white-space: nowrap; }
+        .name-select { background: #222; color: #fff; border: none; font-size: 4vmin; width: 35vw; height: 5vh; text-align-last: center; }
+        .partner-wrapper label { font-size: 3vmin; }
+        .main-display-wrapper { height: 55%; display: flex; align-items: center; gap: 1px; flex-shrink: 0; }
+        .life-center-unit { flex: 1.5; display: flex; flex-direction: column; align-items: center; }
+        .life { font-size: 15vmin; font-weight: bold; color: #4caf50; border: none; background: transparent; text-align: center; width: 100%; padding: 0; height: 14vmin; }
+        .life-btn-group { display: flex; gap: 2px; }
+        .btn-life { width: 8vw; height: 5vh; font-size: 4vmin; border: none; cursor: pointer; color: #fff; border-radius: 3px; }
+        .btn-plus { background: #2e7d32; color: #fff; }
+        .btn-minus { background: #c62828; color: #fff; }
+        .num-select { font-size: 3vmin; text-align-last: center;  margin-top: 1vh; background: #1f1f1f; color: #dcdcdc; }
+        .sidebar-counters { width: 25vw; display: flex; flex-direction: column; gap: 1px; }
+        .side-item { background: #1a1a1a; padding: 1px 1px; display: flex; justify-content: space-between; font-size: 2.5vmin; border-radius: 2px; align-items: center }
+        .side-label { font-size: 2.5vmin; }
+        .side-val { margin-left: 1vw; margin-right: 1vw; }
+        .btn-side, .btn-cmd { width: 3vw; height: 3vh; font-size: 4vmin; display: flex; align-items: center; background: #444; color: #fff; border: none; }
+        .side-dice-wrapper { background: #1a1a1a; height: 8vh; display: grid; grid-template-rows: 3.7vh 3.5vh; }
+        .side-dice-input-row { flex-wrap: nowrap; display: flex;  justify-content: space-around; align-items: center; width: 100%; align-self: start; }
+        .dice-input { width: 10vw; height: 3vh; font-size: 2.5vmin; }
+        .dice-btn { font-size: 2.5vmin ; padding: 1px; background: #ffc107; color: #000; }
+        .dice-res-row {  flex-wrap: nowrap; display: flex;  justify-content: space-around; align-items: center; width: 100%; }
+        .dice-result, .dice-format { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; }
+        .dice-result { font-size: 4vmin ; color: #ffeb3b; font-weight: bold; }
+        .dice-format { font-size: 1.5vmin ; color: #ffffff; }
+        .commander-area { flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 0px; min-height: 0; }
+        .cmd-box { background: #1a1a1a; border: 1px solid #222; padding: 1px; display: flex; flex-direction: column; justify-content: center; }
+        .commander-area .cmd-header { font-size: 1.5vmin; color: #ffffff; text-align: center; }
+        .cmd-body { display: flex; justify-content: space-around; align-items: center; }
+        .cmd-val { font-size: 3.5vmin; font-weight: bold; color: #ff9800; }
+        .cmd-side-label { font-size: 1vmin; color: #ffffff; display: block; width: 100%; text-align: center; margin-bottom: 0px; }
+        .cmd-unit { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .cmd-val-wrap { display: flex; align-items: center; justify-content: center; width: 100%; justify-content: space-around;}
+        .cmd-box.is-self { opacity: 0.3; }
+    </style>
+</head>
+<body class="state-none">
+    <div class="app-header">
+        <span style="font-size:0.8rem; font-weight:bold; color:#777;">Samura's MTG Commander Life Counter</span>
+        <div class="header-btns">
+            <select id="day-night-ctrl" class="day-night-select" onchange="directInput('dayNight', this.value)">
+                <option value="none">Day/Night:None</option>
+                <option value="day">Day</option>
+                <option value="night">Night</option>
+            </select>
+            <button class="order-btn" onclick="shuffleNames()">Turn order shuffle</button>
+            <button class="reset-btn" onclick="resetGame()">Reset</button>
+        </div>
+    </div>
+    <div class="grid" id="main-grid"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebaseConfig.js"></script>
+    <script>
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const rootRef = db.collection('game').doc('edh-session-v1');
+        const playerSlots = ['P1', 'P2', 'P3', 'P4'];
+        const grid = document.getElementById('main-grid');
+        playerSlots.forEach((slot, index) => {
+            let html = `
+                <div class="player-box" id="slot-${slot}">
+                    <div class="header-area">
+                        <span class="order-num">${index + 1}</span>
+                        <select id="name-${slot}" class="name-select" onchange="if(this.value!=='') directInput('${slot}.name', this.value)">
+                            <option value="">select nickname</option>
+                        </select>
+                        <div class="partner-wrapper">
+                            <input type="checkbox" id="check-${slot}" class="partner-check" onchange="directInput('${slot}.isPartner', this.checked)">
+                            <label for="check-${slot}">partner</label>
+                        </div>
+                    </div>
+                    <div class="main-display-wrapper">
+                        <div class="life-center-unit">
+                            <div class="life-wrapper"><input type="number" id="life-${slot}" class="life" value="40" onchange="directInput('${slot}.life', parseInt(this.value))"></div>
+                            <div class="life-btn-group">
+                                <button class="btn-life btn-minus" onclick="changeValue('${slot}.life', -1)">-1</button>
+                                <button class="btn-life btn-plus" onclick="changeValue('${slot}.life', 1)">+1</button>
+                            </div>
+                            <select class="num-select" onchange="if(this.value !== '') { directInput('${slot}.life', parseInt(this.value)); this.value = ''; }">
+                                <option value="">from list</option>
+                                ${Array.from({length:150}, (_,i)=>`<option value="${i+1}">${i+1}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="sidebar-counters">
+                            <div id="side-main-${slot}"></div>
+                            <div class="side-dice-wrapper">
+                                <div class="side-dice-input-row">
+                                    <input type="text" id="dice-in-${slot}" class="dice-input" value="1d20" placeholder="1d20">
+                                    <button class="dice-btn" onclick="triggerDice('${slot}')">dice roll</button>
+                                </div>
+                                <div class="dice-res-row">
+                                    <div id="dice-fmt-${slot}" class="dice-format"></div>
+                                    <div id="dice-res-${slot}" class="dice-result">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="commander-area" id="cmd-area-${slot}"></div>
+                </div>`;
+            grid.insertAdjacentHTML('beforeend', html);
+        });
+        function getDynamicColor(val, type) {
+            if (type === 'life') {
+                if (val <= 0) return "#f44336";
+                return `hsl(${Math.min(1, val / 40) * 120}, 100%, 60%)`;
+            } else if (type === 'cmd') {
+                if (val >= 21) return "#ff00ff";
+                return `hsl(${120 - (Math.min(1, val / 21) * 120)}, 100%, 60%)`;
+            } else if (type === 'poison') {
+                if (val <= 0) return "#888";
+                if (val >= 10) return "#ff00ff";
+                return `hsl(${Math.max(0, 120 - (val * 12))}, 100%, 60%)`;
+            }
+            return "#888";
+        }
+        window.changeValue = (path, delta) => {
+            rootRef.update({ [path]: firebase.firestore.FieldValue.increment(delta) });
+        };
+        window.directInput = (path, value) => {
+            rootRef.update({ [path]: value });
+        };
+        window.resetGame = () => {
+            if (!confirm("Do you want to initialize?")) return;
+            const resetData = {};
+            playerSlots.forEach(slot => {
+                resetData[`${slot}.life`] = 40;
+                resetData[`${slot}.poison`] = 0;
+                resetData[`${slot}.rad`] = 0;
+                resetData[`${slot}.tax1`] = 0;
+                resetData[`${slot}.tax2`] = 0;
+                resetData[`${slot}.cmd`] = null;
+            });
+            resetData.dayNight = "none";
+            rootRef.update(resetData);
+        };
+        const setupNameSelects = async () => {
+            try {
+                const response = await fetch(`members.txt?t=${new Date().getTime()}`);
+                const text = await response.text();
+                const members = text.split(/\r?\n/).filter(name => name.trim() !== "");
+                playerSlots.forEach(slot => {
+                    const sel = document.getElementById(`name-${slot}`);
+                    const currentVal = sel.value;
+                    let options = '<option value="">select nickname</option>';
+                    members.forEach(v => { options += `<option value="${v}">${v}</option>`; });
+                    sel.innerHTML = options;
+                    if (members.includes(currentVal)) sel.value = currentVal;
+                });
+            } catch (e) { console.error("Load members.txt failed", e); }
+        };
+        setupNameSelects();
+
+        window.shuffleNames = () => {
+            const currentNames = playerSlots.map(slot => document.getElementById(`name-${slot}`).value).filter(n => n !== "");
+            if (currentNames.length < 2) return alert("Please select two or more nicknames.");
+            playerSlots.forEach(s => document.getElementById(`slot-${s}`).classList.add('shuffling'));
+            let count = 0;
+            const interval = setInterval(() => {
+                playerSlots.forEach(slot => {
+                    const sel = document.getElementById(`name-${slot}`);
+                    sel.value = currentNames[Math.floor(Math.random() * currentNames.length)];
+                });
+                if (++count >= 15) {
+                    clearInterval(interval);
+                    const shuffled = [...currentNames].sort(() => Math.random() - 0.5);
+                    const updates = {};
+                    playerSlots.forEach((slot, i) => {
+                        updates[`${slot}.name`] = shuffled[i] || "";
+                        document.getElementById(`slot-${slot}`).classList.remove('shuffling');
+                    });
+                    rootRef.update(updates);
+                }
+            }, 80);
+        };
+
+        window.triggerDice = (slot) => {
+            const input = document.getElementById(`dice-in-${slot}`);
+            const match = input.value.toLowerCase().match(/^(\d+)d(\d+)$/);
+            if (!match) return;
+            directInput(`${slot}.diceFormat`, input.value);
+            let r = 0;
+            const itv = setInterval(() => {
+                const tmp = Array.from({length:match[1]},()=>Math.floor(Math.random()*match[2])+1).reduce((a,b)=>a+b);
+                directInput(`${slot}.diceResult`, tmp);
+                if (++r > 8) clearInterval(itv);
+            }, 80);
+            input.blur();
+        };
+        rootRef.onSnapshot(doc => {
+            if (!doc.exists) {
+                console.log("No data found. Initializing...");
+                const initialData = {};
+                playerSlots.forEach(slot => {
+                    initialData[slot] = { life: 40, poison: 0, rad: 0, tax1: 0, tax2: 0, name: "", isPartner: false, cmd: {} };
+                });
+                initialData.dayNight = "none";
+                rootRef.set(initialData); 
+                return; 
+            }
+            const d = doc.data();
+            const dnState = d.dayNight || "none";
+            document.body.className = `state-${dnState}`;
+            const dnSelect = document.getElementById('day-night-ctrl');
+            if (dnSelect && document.activeElement !== dnSelect) dnSelect.value = dnState;
+            playerSlots.forEach(target => {
+                const p = d[target] || {};
+                const nameSel = document.getElementById(`name-${target}`);
+                const slotBox = document.getElementById(`slot-${target}`);
+                if (nameSel && document.activeElement !== nameSel && !slotBox.classList.contains('shuffling')) {
+                    nameSel.value = p.name || "";
+                }
+                const check = document.getElementById(`check-${target}`);
+                if (check) check.checked = !!p.isPartner;
+                document.getElementById(`dice-fmt-${target}`).innerText = p.diceFormat || "";
+                document.getElementById(`dice-res-${target}`).innerText = p.diceResult || "--";
+
+                const lifeIn = document.getElementById(`life-${target}`);
+                if (lifeIn && document.activeElement !== lifeIn) {
+                    const lifeVal = p.life ?? 40;
+                    lifeIn.value = lifeVal;
+                    lifeIn.style.color = getDynamicColor(lifeVal, 'life');
+                }
+
+                const poi = p.poison ?? 0;
+                const rad = p.rad ?? 0;
+                let sideHtml = "";
+                if (p.isPartner) {
+                    sideHtml += `<div class="side-item"><span class="side-label" style="color:#00bcd4">CMD A</span><button class="btn-side" onclick="changeValue('${target}.tax1',-1)">-</button><span class="side-val">${p.tax1??0}</span><button class="btn-side" onclick="changeValue('${target}.tax1',1)">+</button></div>`;
+                    sideHtml += `<div class="side-item"><span class="side-label" style="color:#00bcd4">CMD B</span><button class="btn-side" onclick="changeValue('${target}.tax2',-1)">-</button><span class="side-val">${p.tax2??0}</span><button class="btn-side" onclick="changeValue('${target}.tax2',1)">+</button></div>`;
+                } else {
+                    sideHtml += `<div class="side-item"><span class="side-label" style="color:#00bcd4">CMD Cast</span><button class="btn-side" onclick="changeValue('${target}.tax1',-1)">-</button><span class="side-val">${p.tax1??0}</span><button class="btn-side" onclick="changeValue('${target}.tax1',1)">+</button></div>`;
+                }
+                sideHtml += `<div class="side-item"><span class="side-label" style="color:#adff2f">Poison</span><button class="btn-side" onclick="changeValue('${target}.poison',-1)">-</button><span class="side-val" style="color:${getDynamicColor(poi, 'poison')}">${poi}</span><button class="btn-side" onclick="changeValue('${target}.poison',1)">+</button></div>`;
+                sideHtml += `<div class="side-item"><span class="side-label" style="color:#ffeb3b">RAD</span><button class="btn-side" onclick="changeValue('${target}.rad',-1)">-</button><span class="side-val">${rad}</span><button class="btn-side" onclick="changeValue('${target}.rad',1)">+</button></div>`;
+                document.getElementById(`side-main-${target}`).innerHTML = sideHtml;
+
+                const cmdArea = document.getElementById(`cmd-area-${target}`);
+                if (cmdArea) {
+                    cmdArea.innerHTML = '';
+                    ['P1', 'P2', 'P4', 'P3'].forEach(from => {
+                        const fromD = d[from] || {};
+                        const v1 = p.cmd?.[from]?.v1 ?? 0;
+                        const v2 = p.cmd?.[from]?.v2 ?? 0;
+                        let box = `<div class="cmd-box">
+                            <div class="cmd-header">P${from.replace('P','')} CMD</div>
+                            <div class="cmd-body">
+                                <div class="cmd-unit">
+                                    ${fromD.isPartner?'<span class="cmd-side-label">A</span>':''}
+                                    <div class="cmd-val-wrap">
+                                        <button class="btn-cmd" onclick="changeValue('${target}.cmd.${from}.v1',-1)">-</button>
+                                        <span class="cmd-val" style="color:${getDynamicColor(v1,'cmd')}">${v1}</span>
+                                        <button class="btn-cmd" onclick="changeValue('${target}.cmd.${from}.v1',1)">+</button>
+                                    </div>
+                                </div>
+                                ${fromD.isPartner?`<div class="cmd-unit">
+                                    <span class="cmd-side-label">B</span>
+                                    <div class="cmd-val-wrap">
+                                        <button class="btn-cmd" onclick="changeValue('${target}.cmd.${from}.v2',-1)">-</button>
+                                        <span class="cmd-val" style="color:${getDynamicColor(v2,'cmd')}">${v2}</span>
+                                        <button class="btn-cmd" onclick="changeValue('${target}.cmd.${from}.v2',1)">+</button>
+                                    </div>
+                                </div>`:''}
+                            </div>
+                        </div>`;
+                        cmdArea.insertAdjacentHTML('beforeend', box);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
