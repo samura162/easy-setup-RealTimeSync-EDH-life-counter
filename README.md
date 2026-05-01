@@ -25,27 +25,27 @@ A high-performance, real-time synchronized life counter for Magic: The Gathering
 In your terminal (e.g., GitHub Codespaces), run the following commands:
 ```bash
 # Install Firebase CLI
-npm install -g firebase-tools
+`npm install -g firebase-tools`
 
 # Login (Use --no-localhost flag if you are on Codespaces)
 firebase login --no-localhost
 
-##4. Deploy to Web
+**## 4. Deploy to Web**
 Link your local environment to your Firebase project and publish:
 
-Bash
+```bash
 # Link your project ID (Replace [your-project-id] with yours)
-firebase use [your-project-id]
+`firebase use [your-project-id]`
 
 # Upload to Firebase Hosting
-firebase deploy
+`firebase deploy`
 
 **## 📋 Customization**
 Member List
 Edit members.txt and add your playgroup's nicknames (one name per line). After editing, simply run the deploy command again:
 
-Bash
-firebase deploy
+```bash
+`firebase deploy`
 
 **## 📄 License**
 This project is open-source. Feel free to fork and customize it for your own playgroup!
